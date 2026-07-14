@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { Mock, vi } from 'vitest';
 import { Recipe, RecipeService } from '../../features/recipe/recipe.service';
@@ -15,7 +16,7 @@ describe('HomePage', () => {
 
     await TestBed.configureTestingModule({
       imports: [HomePage],
-      providers: [{ provide: RecipeService, useValue: { getRecipes } }],
+      providers: [provideRouter([]), { provide: RecipeService, useValue: { getRecipes } }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomePage);
@@ -58,8 +59,20 @@ describe('HomePage', () => {
 
   it('should render recipes returned by the service', () => {
     recipesSubject.next([
-      { id: 1, name: 'Soupe de tomates', description: 'Une soupe maison.' },
-      { id: 2, name: 'Tarte aux pommes', description: null },
+      {
+        id: 1,
+        name: 'Soupe de tomates',
+        description: 'Une soupe maison.',
+        preparationTime: 15,
+        cookingTime: 30,
+      },
+      {
+        id: 2,
+        name: 'Tarte aux pommes',
+        description: null,
+        preparationTime: 20,
+        cookingTime: 40,
+      },
     ]);
     recipesSubject.complete();
     fixture.detectChanges();

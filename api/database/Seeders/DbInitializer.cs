@@ -1,6 +1,7 @@
-using RecipeBook.Api.Models;
+using RecipeBook.Api.App.Models;
+using RecipeBook.Api.Database.Context;
 
-namespace RecipeBook.Api.Data;
+namespace RecipeBook.Api.Database.Seeders;
 
 public static class DbInitializer
 {

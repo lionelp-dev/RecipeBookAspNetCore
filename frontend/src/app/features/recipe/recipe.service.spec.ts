@@ -20,7 +20,13 @@ describe('RecipeService', () => {
 
   it('should get recipes from the API', () => {
     const recipes: Recipe[] = [
-      { id: 1, name: 'Soupe de tomates', description: 'Une soupe maison.' },
+      {
+        id: 1,
+        name: 'Soupe de tomates',
+        description: 'Une soupe maison.',
+        preparationTime: 15,
+        cookingTime: 30,
+      },
     ];
 
     service.getRecipes().subscribe((result) => expect(result).toEqual(recipes));

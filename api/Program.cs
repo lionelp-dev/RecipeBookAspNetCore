@@ -1,12 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using RecipeBook.Api.Data;
+using RecipeBook.Api.Database.Context;
+using RecipeBook.Api.Database.Seeders;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddValidation();
 builder.Services.AddDbContext<RecipeBookDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -30,17 +33,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseHttpsRedirection();
 
-var api = app.MapGroup("/api");
-
-api.MapGet("/recipes", async (RecipeBookDbContext context) =>
-{
-    var recipes = await context.Recipes
-        .AsNoTracking()
-        .OrderBy(recipe => recipe.Id)
-        .ToListAsync();
-
-    return Results.Ok(recipes);
-})
-.WithName("GetRecipes");
+app.MapControllers();
 
 app.Run();

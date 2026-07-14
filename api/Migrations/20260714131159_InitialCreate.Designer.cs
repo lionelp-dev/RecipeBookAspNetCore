@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using RecipeBook.Api.Data;
+using RecipeBook.Api.Database.Context;
 
 #nullable disable
 
 namespace RecipeBook.Api.Migrations
 {
     [DbContext(typeof(RecipeBookDbContext))]
-    [Migration("20260714094703_InitialCreate")]
+    [Migration("20260714131159_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -19,22 +19,35 @@ namespace RecipeBook.Api.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
-            modelBuilder.Entity("RecipeBook.Api.Models.Recipe", b =>
+            modelBuilder.Entity("RecipeBook.Api.App.Models.Recipe", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("CookingTime")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Description")
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("PreparationTime")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Recipes");
+                    b.ToTable("Recipes", t =>
+                        {
+                            t.HasCheckConstraint("CK_Recipes_CookingTime_NonNegative", "\"CookingTime\" >= 0");
+
+                            t.HasCheckConstraint("CK_Recipes_PreparationTime_NonNegative", "\"PreparationTime\" >= 0");
+                        });
                 });
 #pragma warning restore 612, 618
         }
