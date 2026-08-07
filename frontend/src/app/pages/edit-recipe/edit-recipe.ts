@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
+  FormArray,
   FormBuilder,
   ReactiveFormsModule,
   ValidationErrors,
@@ -10,6 +11,13 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { RecipeService } from '../../features/recipe/recipe.service';
+import { IngredientFieldsComponent } from '../../features/recipe/ingredient-fields/ingredient-fields';
+import {
+  createIngredientGroup,
+  IngredientFormGroup,
+  normalizeIngredient,
+} from '../../features/recipe/ingredient-fields/ingredient-form';
+import { RecipeIngredientRequest } from '../../features/recipe/recipe.types';
 
 function requiredTrimmed(control: AbstractControl<string>): ValidationErrors | null {
   return control.value.trim() ? null : { required: true };
@@ -17,7 +25,7 @@ function requiredTrimmed(control: AbstractControl<string>): ValidationErrors | n
 
 @Component({
   selector: 'app-edit-recipe-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, IngredientFieldsComponent],
   templateUrl: './edit-recipe.html',
 })
 export class EditRecipePage {
@@ -37,6 +45,7 @@ export class EditRecipePage {
     description: ['', Validators.maxLength(1000)],
     preparationTime: [0, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
     cookingTime: [0, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
+    ingredients: new FormArray<IngredientFormGroup>([]),
   });
 
   constructor() {
@@ -61,12 +70,23 @@ export class EditRecipePage {
       )
       .subscribe({
         next: (recipe) => {
-          this.form.setValue({
+          this.form.controls.ingredients.clear();
+          this.form.patchValue({
             name: recipe.name,
             description: recipe.description ?? '',
             preparationTime: recipe.preparationTime,
             cookingTime: recipe.cookingTime,
           });
+
+          for (const ingredient of recipe.ingredients) {
+            this.form.controls.ingredients.push(
+              createIngredientGroup(this.formBuilder, {
+                quantity: ingredient.quantity,
+                unit: ingredient.unit ?? '',
+                name: ingredient.name,
+              }),
+            );
+          }
         },
         error: () => {
           this.loadErrorMessage.set(
@@ -85,6 +105,9 @@ export class EditRecipePage {
 
     const value = this.form.getRawValue();
     const description = value.description.trim();
+    const ingredients = value.ingredients
+      .map(normalizeIngredient)
+      .filter((ingredient): ingredient is RecipeIngredientRequest => ingredient !== null);
 
     this.isSubmitting.set(true);
     this.saveErrorMessage.set(null);
@@ -95,6 +118,7 @@ export class EditRecipePage {
         description: description || null,
         preparationTime: value.preparationTime,
         cookingTime: value.cookingTime,
+        ingredients,
       })
       .pipe(
         takeUntilDestroyed(this.destroyRef),

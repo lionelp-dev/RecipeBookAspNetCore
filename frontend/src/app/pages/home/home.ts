@@ -3,7 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { LucidePencil, LucideTrash2 } from '@lucide/angular';
 import { finalize } from 'rxjs';
-import { Recipe, RecipeService } from '../../features/recipe/recipe.service';
+import { RecipeService } from '../../features/recipe/recipe.service';
+import { Recipe, RecipeIngredient } from '../../features/recipe/recipe.types';
 
 @Component({
   selector: 'app-home-page',
@@ -19,8 +20,28 @@ export class HomePage {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly deleteErrorMessage = signal<string | null>(null);
   protected readonly deletingRecipeId = signal<number | null>(null);
-  protected readonly isSidebarOpen = signal(false);
+  protected readonly isMobileMenuOpen = signal(false);
+  protected readonly selectedRecipeId = signal<number | null>(null);
   protected readonly skeletonItems = [1, 2, 3, 4, 5, 6];
+  protected readonly selectedRecipe = computed(() => {
+    const selectedRecipeId = this.selectedRecipeId();
+
+    if (selectedRecipeId === null) {
+      return null;
+    }
+
+    return this.recipes().find((recipe) => recipe.id === selectedRecipeId) ?? null;
+  });
+  protected readonly selectedRecipeTotalTime = computed(() => {
+    const recipe = this.selectedRecipe();
+
+    if (!recipe) {
+      return null;
+    }
+
+    return recipe.preparationTime + recipe.cookingTime;
+  });
+  protected readonly hasSelectedRecipe = computed(() => this.selectedRecipe() !== null);
   protected readonly recipeCountLabel = computed(() => {
     const count = this.recipes().length;
     return `${count} recette${count === 1 ? '' : 's'}`;
@@ -67,23 +88,53 @@ export class HomePage {
         finalize(() => this.deletingRecipeId.set(null)),
       )
       .subscribe({
-        next: () => this.loadRecipes(),
+        next: () => {
+          if (this.selectedRecipeId() === recipe.id) {
+            this.selectedRecipeId.set(null);
+          }
+
+          this.loadRecipes();
+        },
         error: () => {
           this.deleteErrorMessage.set('Impossible de supprimer la recette. Veuillez réessayer.');
         },
       });
   }
 
-  protected openSidebar(): void {
-    this.isSidebarOpen.set(true);
+  protected openMobileMenu(): void {
+    this.isMobileMenuOpen.set(true);
   }
 
-  protected closeSidebar(): void {
-    this.isSidebarOpen.set(false);
+  protected closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
+  }
+
+  protected openRecipeSidebar(recipe: Recipe): void {
+    this.selectedRecipeId.set(recipe.id);
+    this.isMobileMenuOpen.set(false);
+  }
+
+  protected closeRecipeSidebar(): void {
+    this.selectedRecipeId.set(null);
+  }
+
+  protected formatIngredient(ingredient: RecipeIngredient): string {
+    const parts: string[] = [];
+
+    parts.push(`${ingredient.quantity}`);
+
+    if (ingredient.unit) {
+      parts.push(ingredient.unit);
+    }
+
+    parts.push(ingredient.name);
+
+    return parts.join(' ');
   }
 
   @HostListener('document:keydown.escape')
-  protected closeSidebarWithEscape(): void {
-    this.closeSidebar();
+  protected closePanelsWithEscape(): void {
+    this.closeMobileMenu();
+    this.closeRecipeSidebar();
   }
 }

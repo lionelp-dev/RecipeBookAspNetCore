@@ -11,4 +11,6 @@ public class Recipe
     public int PreparationTime { get; set; }
 
     public int CookingTime { get; set; }
+
+    public List<RecipeIngredient> Ingredients { get; set; } = new();
 }

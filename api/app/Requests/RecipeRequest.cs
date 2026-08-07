@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RecipeBook.Api.App.Requests;
 
-public sealed class CreateRecipeRequest
+public sealed class RecipeRequest
 {
     [Required(ErrorMessage = "Le nom est requis.")]
     [StringLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères.")]
@@ -18,4 +18,6 @@ public sealed class CreateRecipeRequest
     [Required(ErrorMessage = "Le temps de cuisson est requis.")]
     [Range(0, int.MaxValue, ErrorMessage = "Le temps de cuisson doit être positif ou nul.")]
     public int? CookingTime { get; init; }
+
+    public List<RecipeIngredientRequest> Ingredients { get; init; } = [];
 }

@@ -1,23 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-
-export interface Recipe {
-  id: number;
-  name: string;
-  description: string | null;
-  preparationTime: number;
-  cookingTime: number;
-}
-
-export interface CreateRecipeRequest {
-  name: string;
-  description: string | null;
-  preparationTime: number;
-  cookingTime: number;
-}
-
-export type UpdateRecipeRequest = CreateRecipeRequest;
+import { CreateRecipeRequest, Recipe, UpdateRecipeRequest } from './recipe.types';
 
 @Injectable({ providedIn: 'root' })
 export class RecipeService {

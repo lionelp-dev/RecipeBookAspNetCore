@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
+  FormArray,
   FormBuilder,
   ReactiveFormsModule,
   ValidationErrors,
@@ -10,6 +11,9 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { RecipeService } from '../../features/recipe/recipe.service';
+import { RecipeIngredientRequest } from '../../features/recipe/recipe.types';
+import { IngredientFormGroup, normalizeIngredient } from '../../features/recipe/ingredient-fields/ingredient-form';
+import { IngredientFieldsComponent } from '../../features/recipe/ingredient-fields/ingredient-fields';
 
 function requiredTrimmed(control: AbstractControl<string>): ValidationErrors | null {
   return control.value.trim() ? null : { required: true };
@@ -17,7 +21,7 @@ function requiredTrimmed(control: AbstractControl<string>): ValidationErrors | n
 
 @Component({
   selector: 'app-create-recipe-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, IngredientFieldsComponent],
   templateUrl: './create-recipe.html',
 })
 export class CreateRecipePage {
@@ -33,6 +37,7 @@ export class CreateRecipePage {
     description: ['', Validators.maxLength(1000)],
     preparationTime: [0, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
     cookingTime: [0, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
+    ingredients: new FormArray<IngredientFormGroup>([]),
   });
 
   protected submit(): void {
@@ -44,6 +49,9 @@ export class CreateRecipePage {
 
     const value = this.form.getRawValue();
     const description = value.description.trim();
+    const ingredients = value.ingredients
+      .map(normalizeIngredient)
+      .filter((ingredient): ingredient is RecipeIngredientRequest => ingredient !== null);
 
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
@@ -54,6 +62,7 @@ export class CreateRecipePage {
         description: description || null,
         preparationTime: value.preparationTime,
         cookingTime: value.cookingTime,
+        ingredients,
       })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
